@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# ensure-git-repo - Check if current directory is in a git repository and return
+# the root path
+#
+# Usage: ensure-git-repo
+#
+# Returns:
+#   Outputs the git repository root path to stdout if in a git repo
+#   Exits with code 1 and prints error to stderr if not in a git repo
+#
+# Examples:
+#   git_root=$(ensure-git-repo)
+#   git_root=$(ensure-git-repo) && echo "Git root: $git_root"
+
+# Find the root of the current git repository
+if ! git_root=$(git rev-parse --show-toplevel 2>/dev/null); then
+    echo "Error: Not in a git repository" >&2
+    exit 1
+fi
+
+# Output the git root for use by calling scripts
+echo "$git_root"

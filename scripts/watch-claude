@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -o pipefail
+
+source use-help && use-help "$@" <<'EOF'
+watch-claude — Follow Claude's tee-claude log for the current git repo.
+
+USAGE:
+  watch-claude
+
+DESCRIPTION:
+  Tails /tmp/tee-claude/<repo>.log, where <repo> is the basename of the
+  current git repository. Must be invoked from inside a git repo. The log
+  is written by the `tee-claude` wrapper that the Claude PreToolUse hook
+  injects around every Bash tool command.
+
+  Also publishes the current terminal width to <repo>.cols (refreshed on
+  SIGWINCH) so hooks rendering into the log can size their output.
+EOF
+
+git_root=$(ensure-git-repo) || exit $?
+log_id=$(basename "$git_root")
+LOG="/tmp/tee-claude/${log_id}.log"
+COLS="/tmp/tee-claude/${log_id}.cols"
+
+publish_cols() { stty size </dev/tty 2>/dev/null | awk '{print $2}' > "$COLS"; }
+publish_cols
+trap publish_cols WINCH
+
+tail -F "$LOG" &
+tail_pid=$!
+trap 'kill "$tail_pid" 2>/dev/null; rm -f "$COLS"' EXIT INT TERM
+while kill -0 "$tail_pid" 2>/dev/null; do
+  wait "$tail_pid" 2>/dev/null
+done

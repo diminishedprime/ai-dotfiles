@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# ensure-argument - Ensure a required argument is provided
+#
+# Usage: ensure-argument <argument_name> <argument_value> [custom_error_message]
+#
+# This script validates that a required argument has been provided.
+# If the argument is empty or not provided, it displays an error and exits.
+#
+# Arguments:
+#   argument_name       - The name of the argument for error messages
+#   argument_value      - The value to check (empty values will cause failure)
+#   custom_error_message - Optional custom error message
+#
+# Examples:
+#   ensure-argument "from branch" "$from_branch"
+#   ensure-argument "config file" "$config_file" "Configuration file is required for this operation"
+
+set -e
+
+argument_name="$1"
+argument_value="$2"
+custom_error_message="$3"
+
+if [ -z "$argument_name" ]; then
+    echo "Error: ensure-argument requires an argument name" >&2
+    exit 1
+fi
+
+if [ -z "$argument_value" ]; then
+    if [ -n "$custom_error_message" ]; then
+        echo "Error: $custom_error_message" >&2
+    else
+        echo "Error: $argument_name is required" >&2
+    fi
+    exit 1
+fi

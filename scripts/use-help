@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# use-help — Display help text when --help or -h flag is provided
+#
+# IMPORTANT: This MUST be a function (sourced), not a direct script.
+#
+# When help is displayed, we need to exit the parent shell, not the subprocess.
+# Only a sourced function's `exit` can affect the parent
+#
+# USAGE (in scripts that want to use it):
+#   source use-help && use-help "$@" <<'EOF'
+#   script-name — short description
+#
+#   USAGE:
+#     script-name [options]
+#
+#   EXAMPLE:
+#     script-name --verbose
+#   EOF
+
+use-help() {
+	local help_text
+	help_text=$(cat)
+
+	if [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
+		echo "$help_text"
+		exit 0
+	fi
+}
