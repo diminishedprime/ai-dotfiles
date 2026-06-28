@@ -10,9 +10,14 @@
 
 input=$(cat)
 
-cc-toolgate <<<"$input" | jq --argjson orig "$input" '
+root="${CLAUDE_PROJECT_DIR:-$PWD}"
+
+cc-toolgate <<<"$input" | jq --argjson orig "$input" --arg root "$root" '
   .hookSpecificOutput.updatedInput = (
     ($orig.tool_input // {}) +
-    { command: ("tee-claude zsh -c " + ($orig.tool_input.command | @sh)) }
+    { command: (
+        "TEE_CLAUDE_ROOT=" + ($root | @sh)
+        + " tee-claude zsh -c " + ($orig.tool_input.command | @sh)
+    ) }
   )
 '

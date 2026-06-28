@@ -3,7 +3,7 @@
 set -o pipefail
 
 source use-help && use-help "$@" <<'EOF'
-tee-claude — Log Claude's Bash tool commands to /tmp/tee-claude/<repo>.log for live tailing.
+tee-claude — Log Claude's Bash tool commands to /tmp/tee-claude/<id>.log for live tailing.
 
 USAGE:
   tee-claude zsh -c <command>
@@ -11,22 +11,23 @@ USAGE:
 DESCRIPTION:
   Wrapper invoked by the Claude PreToolUse hook (dotfiles/claude/hooks/
   pre-tool-use.sh). Tees stdout+stderr of the command to both the terminal
-  and /tmp/tee-claude/<repo>.log, so a persistent `watch-claude` tail in
+  and /tmp/tee-claude/<id>.log, so a persistent `watch-claude` tail in
   another pane can follow along live.
 
-  The log is named after the current git repo (or a path hash if not in a
-  repo) and appended to on each invocation. The visible screen is cleared
-  between runs so a persistent `tail -F` breaks cleanly; scrollback is
-  preserved.
+  The log is keyed to the VS Code workspace root passed in via
+  TEE_CLAUDE_ROOT (its basename plus a short path hash), falling back to the
+  cwd for manual use, so every command in the window — including ones run
+  inside subrepos of a polyrepo root — shares one log, appended to on each
+  invocation. The visible screen is cleared between runs so a persistent
+  `tail -F` breaks cleanly; scrollback is preserved.
 EOF
 
 ensure-argument "command" "$3"
 
-if git_root=$(ensure-git-repo 2>/dev/null); then
-	log_id=$(basename "$git_root")
-else
-	log_id="$(basename "$PWD")_$(pwd | md5sum | cut -d' ' -f1)"
-fi
+src="${TEE_CLAUDE_ROOT:-$PWD}"
+root=$(cd "$src" 2>/dev/null && pwd -P)
+log_id="$(basename "$root")_$(printf '%s' "$root" | md5sum | cut -c1-8)"
+
 LOG="/tmp/tee-claude/${log_id}.log"
 COLOR_STATE="/tmp/tee-claude/${log_id}.color"
 
@@ -35,12 +36,12 @@ mkdir -p /tmp/tee-claude
 COLORS=(36 33 32 35)
 idx=$(cat "$COLOR_STATE" 2>/dev/null || echo 0)
 color=${COLORS[$idx]}
-next=$(( (idx + 1) % ${#COLORS[@]} ))
-printf '%s' "$next" > "$COLOR_STATE"
+next=$(((idx + 1) % ${#COLORS[@]}))
+printf '%s' "$next" >"$COLOR_STATE"
 
-printf '\033[H\033[2J\033[%sm$ %s\033[0m\n' "$color" "$3" >> "$LOG"
+printf '\033[H\033[2J\033[%sm$ %s\033[0m\n' "$color" "$3" >>"$LOG"
 printf '[harness: zsh -c]\n'
 "$@" 2>&1 | tee -a "$LOG"
 status=${PIPESTATUS[0]}
-printf '\033[%smexit: %s\033[0m\n' "$color" "$status" >> "$LOG"
+printf '\033[%smexit: %s\033[0m\n' "$color" "$status" >>"$LOG"
 exit "$status"
