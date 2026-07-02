@@ -20,9 +20,7 @@ DESCRIPTION:
   SIGWINCH) so hooks rendering into the log can size their output.
 EOF
 
-src="$PWD"
-root=$(cd "$src" 2>/dev/null && pwd -P)
-log_id="$(basename "$root")_$(printf '%s' "$root" | md5sum | cut -c1-8)"
+log_id=$(claude-log-id)
 
 LOG="/tmp/tee-claude/${log_id}.log"
 COLS="/tmp/tee-claude/${log_id}.cols"

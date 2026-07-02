@@ -10,11 +10,7 @@ input=$(cat)
 event=$(jq -r '.hook_event_name' <<<"$input")
 tool=$(jq -r '.tool_name' <<<"$input")
 
-if git_root=$(ensure-git-repo 2>/dev/null); then
-	log_id=$(basename "$git_root")
-else
-	log_id="$(basename "$PWD")_$(pwd | md5sum | cut -d' ' -f1)"
-fi
+log_id=$(claude-log-id "${CLAUDE_PROJECT_DIR:-$PWD}")
 LOG="/tmp/tee-claude/${log_id}.log"
 COLOR_STATE="/tmp/tee-claude/${log_id}.color"
 

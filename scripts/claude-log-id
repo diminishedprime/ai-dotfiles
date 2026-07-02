@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# claude-log-id — Derive the tee-claude log id from a workspace root.
+#
+# Usage: claude-log-id [root]
+#
+# The id is the workspace root's basename plus a short hash of its absolute
+# path, so every command in a VS Code window — including ones run inside
+# subrepos of a polyrepo root — shares one /tmp/tee-claude/<id>.log. Callers
+# pass their own notion of the root (default: $PWD):
+#   tee-claude   -> ${TEE_CLAUDE_ROOT:-$PWD}
+#   watch-claude -> $PWD
+#   log-read.sh  -> ${CLAUDE_PROJECT_DIR:-$PWD}
+
+src="${1:-$PWD}"
+root=$(cd "$src" 2>/dev/null && pwd -P)
+printf '%s_%s' "$(basename "$root")" "$(printf '%s' "$root" | md5sum | cut -c1-8)"

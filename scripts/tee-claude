@@ -24,9 +24,7 @@ EOF
 
 ensure-argument "command" "$3"
 
-src="${TEE_CLAUDE_ROOT:-$PWD}"
-root=$(cd "$src" 2>/dev/null && pwd -P)
-log_id="$(basename "$root")_$(printf '%s' "$root" | md5sum | cut -c1-8)"
+log_id=$(claude-log-id "${TEE_CLAUDE_ROOT:-$PWD}")
 
 LOG="/tmp/tee-claude/${log_id}.log"
 COLOR_STATE="/tmp/tee-claude/${log_id}.color"
